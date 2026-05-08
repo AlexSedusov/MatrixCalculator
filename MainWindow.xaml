@@ -46,19 +46,22 @@
             <Setter Property="HeadersVisibility" Value="None" />
             <Setter Property="GridLinesVisibility" Value="All" />
             <Setter Property="RowHeaderWidth" Value="0" />
-            <Setter Property="MinRowHeight" Value="46" />
-            <Setter Property="RowHeight" Value="50" />
-            <Setter Property="ColumnWidth" Value="70" />
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="Margin" Value="0,8,0,0" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="AlternatingRowBackground" Value="#F8FAFC" />
+            <Setter Property="MinRowHeight" Value="68" />
+            <Setter Property="RowHeight" Value="68" />
+            <Setter Property="ColumnWidth" Value="68" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Background" Value="#F3F3F3" />
+            <Setter Property="AlternatingRowBackground" Value="#F3F3F3" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
 
         <Style TargetType="{x:Type DataGridCell}">
             <Setter Property="BorderBrush" Value="#B7B7B7" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="#F3F3F3" />
             <Setter Property="Foreground" Value="#111111" />
             <Setter Property="Padding" Value="6" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -226,7 +229,10 @@
                                               SelectedItem="{Binding MatrixAColumns}" />
                                     <Button Content="{Binding ResizeLabel}" Command="{Binding ResizeMatrixACommand}" />
                                 </WrapPanel>
-                                <DataGrid ItemsSource="{Binding MatrixAView}" />
+                                <Border Style="{StaticResource MatrixBracketStyle}" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <DataGrid ItemsSource="{Binding MatrixAView}"
+                                              AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn" />
+                                </Border>
                             </DockPanel>
                         </GroupBox>
 
@@ -245,7 +251,10 @@
                                               SelectedItem="{Binding MatrixBColumns}" />
                                     <Button Content="{Binding ResizeLabel}" Command="{Binding ResizeMatrixBCommand}" />
                                 </WrapPanel>
-                                <DataGrid ItemsSource="{Binding MatrixBView}" />
+                                <Border Style="{StaticResource MatrixBracketStyle}" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <DataGrid ItemsSource="{Binding MatrixBView}"
+                                              AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn" />
+                                </Border>
                             </DockPanel>
                         </GroupBox>
                     </Grid>
@@ -261,11 +270,15 @@
                                        Text="{Binding StatusMessage}"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,6" />
-                            <DataGrid Grid.Row="1"
-                                      ItemsSource="{Binding ResultView}"
-                                      IsReadOnly="True"
-                                      MaxHeight="180"
-                                      Visibility="{Binding HasMatrixResult, Converter={StaticResource BoolToVisibility}}" />
+                            <Border Grid.Row="1"
+                                    Style="{StaticResource MatrixBracketStyle}"
+                                    HorizontalAlignment="Left"
+                                    Visibility="{Binding HasMatrixResult, Converter={StaticResource BoolToVisibility}}">
+                                <DataGrid ItemsSource="{Binding ResultView}"
+                                          AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn"
+                                          IsReadOnly="True"
+                                          MaxHeight="180" />
+                            </Border>
                             <TextBlock Grid.Row="2"
                                        Text="{Binding ResultText}"
                                        FontSize="22"
@@ -391,6 +404,7 @@
                                       SelectedItem="{Binding SelectedQuestionCount}" />
 
                             <Button Content="{Binding StartTestLabel}" Command="{Binding StartTestCommand}" />
+                            <Button Content="{Binding EndTestLabel}" Command="{Binding EndTestCommand}" />
                             <TextBlock Text="{Binding ScoreText}"
                                        VerticalAlignment="Center"
                                        FontWeight="SemiBold"
@@ -405,8 +419,10 @@
                             <ColumnDefinition Width="0.9*" />
                         </Grid.ColumnDefinitions>
 
-                        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                            <StackPanel>
+                        <ScrollViewer Grid.Column="0"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalContentAlignment="Stretch">
+                            <StackPanel HorizontalAlignment="Stretch">
                                 <Border Style="{StaticResource WorkPanelBorderStyle}">
                                     <TextBlock Text="{Binding CurrentQuestionText}"
                                                TextWrapping="Wrap"
@@ -416,28 +432,29 @@
                                 </Border>
 
                                 <Border Style="{StaticResource WorkPanelBorderStyle}">
-                                    <WrapPanel HorizontalAlignment="Center">
+                                    <WrapPanel HorizontalAlignment="Center"
+                                               VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" Margin="4" VerticalAlignment="Center">
                                             <TextBlock Text="A =" FontSize="26" VerticalAlignment="Center" Margin="0,26,8,0" />
-                                            <ContentControl Content="{Binding VisualMatrixA}"
+                                            <ContentControl Content="{Binding TestVisualMatrixA}"
                                                             ContentTemplate="{StaticResource MatrixVisualTemplate}" />
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal"
                                                     Margin="36,4,4,4"
                                                     VerticalAlignment="Center"
-                                                    Visibility="{Binding HasVisualMatrixB, Converter={StaticResource BoolToVisibility}}">
+                                                    Visibility="{Binding TestHasVisualMatrixB, Converter={StaticResource BoolToVisibility}}">
                                             <TextBlock Text="B =" FontSize="26" VerticalAlignment="Center" Margin="0,26,8,0" />
-                                            <ContentControl Content="{Binding VisualMatrixB}"
+                                            <ContentControl Content="{Binding TestVisualMatrixB}"
                                                             ContentTemplate="{StaticResource MatrixVisualTemplate}" />
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal"
                                                     Margin="36,4,4,4"
                                                     VerticalAlignment="Center"
-                                                    Visibility="{Binding HasVisualScalar, Converter={StaticResource BoolToVisibility}}">
+                                                    Visibility="{Binding TestHasVisualScalar, Converter={StaticResource BoolToVisibility}}">
                                             <TextBlock Text="{Binding ScalarLabel}" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding VisualScalarValueText}"
+                                            <TextBlock Text="{Binding TestVisualScalarValueText}"
                                                        Margin="10,0,0,0"
                                                        FontSize="28"
                                                        FontWeight="SemiBold"
@@ -456,26 +473,27 @@
                                                    Margin="0,4,0,12" />
 
                                         <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                                      VerticalScrollBarVisibility="Disabled">
+                                                      VerticalScrollBarVisibility="Disabled"
+                                                      HorizontalContentAlignment="Center">
                                             <StackPanel Orientation="Horizontal"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center">
-                                                <ContentControl Content="{Binding VisualMatrixA}"
+                                                <ContentControl Content="{Binding TestVisualMatrixA}"
                                                                 ContentTemplate="{StaticResource MatrixVisualTemplate}" />
-                                                <TextBlock Text="{Binding VisualOperationSymbol}"
+                                                <TextBlock Text="{Binding TestVisualOperationSymbol}"
                                                            FontSize="42"
                                                            FontWeight="SemiBold"
                                                            VerticalAlignment="Center"
                                                            Margin="12,34,12,0" />
-                                                <ContentControl Content="{Binding VisualMatrixB}"
+                                                <ContentControl Content="{Binding TestVisualMatrixB}"
                                                                 ContentTemplate="{StaticResource MatrixVisualTemplate}"
-                                                                Visibility="{Binding HasVisualMatrixB, Converter={StaticResource BoolToVisibility}}" />
+                                                                Visibility="{Binding TestHasVisualMatrixB, Converter={StaticResource BoolToVisibility}}" />
                                                 <TextBlock Text="="
                                                            FontSize="42"
                                                            FontWeight="SemiBold"
                                                            VerticalAlignment="Center"
                                                            Margin="12,34,12,0" />
-                                                <ContentControl Content="{Binding VisualResultMatrix}"
+                                                <ContentControl Content="{Binding TestVisualResultMatrix}"
                                                                 ContentTemplate="{StaticResource MatrixVisualTemplate}" />
                                             </StackPanel>
                                         </ScrollViewer>
@@ -485,9 +503,14 @@
                                 <Border Style="{StaticResource WorkPanelBorderStyle}">
                                     <StackPanel>
                                         <TextBlock Text="{Binding UserAnswerLabel}" FontSize="18" FontWeight="SemiBold" />
-                                        <DataGrid ItemsSource="{Binding AnswerView}"
-                                                  MaxHeight="150"
-                                                  Visibility="{Binding IsMatrixAnswerExpected, Converter={StaticResource BoolToVisibility}}" />
+                                        <Border Style="{StaticResource MatrixBracketStyle}"
+                                                HorizontalAlignment="Left"
+                                                Margin="0,10,0,0"
+                                                Visibility="{Binding IsMatrixAnswerExpected, Converter={StaticResource BoolToVisibility}}">
+                                            <DataGrid ItemsSource="{Binding AnswerView}"
+                                                      AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn"
+                                                      MaxHeight="150" />
+                                        </Border>
                                         <StackPanel Visibility="{Binding IsNumericAnswerExpected, Converter={StaticResource BoolToVisibility}}">
                                             <TextBlock Text="{Binding NumberAnswerLabel}" Margin="0,8,0,4" />
                                             <TextBox Width="180"
@@ -497,7 +520,7 @@
                                         <WrapPanel Margin="0,10,0,0">
                                             <Button Content="{Binding CheckAnswerLabel}" Command="{Binding CheckAnswerCommand}" />
                                             <Button Content="{Binding NextQuestionLabel}" Command="{Binding NextQuestionCommand}" />
-                                            <Button Content="{Binding ShowSolutionLabel}" Command="{Binding ShowSolutionCommand}" />
+                                            <Button Content="{Binding ShowSolutionLabel}" Command="{Binding TestShowSolutionCommand}" />
                                         </WrapPanel>
                                         <TextBlock Text="{Binding TestFeedback}"
                                                    TextWrapping="Wrap"
@@ -515,25 +538,25 @@
                             <DockPanel LastChildFill="True">
                                 <StackPanel DockPanel.Dock="Bottom">
                                     <UniformGrid Columns="2" Margin="0,12,0,6">
-                                        <Button Content="{Binding ResetStepLabel}" Command="{Binding ResetVisualStepCommand}" />
-                                        <Button Content="{Binding PreviousStepLabel}" Command="{Binding PreviousVisualStepCommand}" />
-                                        <Button Content="{Binding NextStepLabel}" Command="{Binding NextVisualStepCommand}" />
-                                        <Button Content="{Binding ShowAllLabel}" Command="{Binding ShowAllVisualStepsCommand}" />
+                                        <Button Content="{Binding ResetStepLabel}" Command="{Binding TestResetVisualStepCommand}" />
+                                        <Button Content="{Binding PreviousStepLabel}" Command="{Binding TestPreviousVisualStepCommand}" />
+                                        <Button Content="{Binding NextStepLabel}" Command="{Binding TestNextVisualStepCommand}" />
+                                        <Button Content="{Binding ShowAllLabel}" Command="{Binding TestShowAllVisualStepsCommand}" />
                                     </UniformGrid>
-                                    <TextBlock Text="{Binding VisualProgressText}"
+                                    <TextBlock Text="{Binding TestVisualProgressText}"
                                                FontWeight="SemiBold"
                                                Margin="4,0,4,4" />
-                                    <ProgressBar Value="{Binding VisualProgressValue, Mode=OneWay}" Maximum="100" Height="10" />
+                                    <ProgressBar Value="{Binding TestVisualProgressValue, Mode=OneWay}" Maximum="100" Height="10" />
                                 </StackPanel>
 
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                     <StackPanel>
-                                        <TextBlock Text="{Binding VisualStepTitle}"
+                                        <TextBlock Text="{Binding TestVisualStepTitle}"
                                                    FontSize="16"
                                                    FontWeight="Bold"
                                                    TextWrapping="Wrap"
                                                    Margin="0,4,0,20" />
-                                        <TextBlock Text="{Binding VisualStepDescription}"
+                                        <TextBlock Text="{Binding TestVisualStepDescription}"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
                                                    TextWrapping="Wrap"
@@ -542,17 +565,17 @@
                                                    FontSize="16"
                                                    FontWeight="Bold"
                                                    Margin="0,0,0,4"
-                                                   Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
-                                        <TextBlock Text="{Binding VisualStepFormula}"
+                                                   Visibility="{Binding TestHasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock Text="{Binding TestVisualStepFormula}"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
                                                    TextWrapping="Wrap"
                                                    Margin="0,0,0,24"
-                                                   Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
-                                        <ContentControl Content="{Binding VisualResultMatrix}"
+                                                   Visibility="{Binding TestHasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                        <ContentControl Content="{Binding TestVisualResultMatrix}"
                                                         ContentTemplate="{StaticResource MatrixVisualTemplate}"
                                                         HorizontalAlignment="Center"
-                                                        Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                                        Visibility="{Binding TestHasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
                                     </StackPanel>
                                 </ScrollViewer>
                             </DockPanel>
@@ -570,7 +593,7 @@
                                                    FontSize="16"
                                                    FontWeight="Bold"
                                                    Margin="0,0,0,4" />
-                                        <TextBlock Text="{Binding VisualRuleText}"
+                                        <TextBlock Text="{Binding TestVisualRuleText}"
                                                    TextWrapping="Wrap"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
@@ -579,7 +602,7 @@
                                                    FontSize="16"
                                                    FontWeight="Bold"
                                                    Margin="0,0,0,4" />
-                                        <TextBlock Text="{Binding VisualHintText}"
+                                        <TextBlock Text="{Binding TestVisualHintText}"
                                                    TextWrapping="Wrap"
                                                    FontSize="16"
                                                    FontWeight="SemiBold" />
@@ -587,7 +610,7 @@
                                 </Expander>
 
                                 <Expander Header="{Binding SolutionLabel}" Margin="0,30,0,0">
-                                    <TextBox Text="{Binding SolutionText, Mode=OneWay}"
+                                    <TextBox Text="{Binding TestSolutionText, Mode=OneWay}"
                                              IsReadOnly="True"
                                              AcceptsReturn="True"
                                              TextWrapping="NoWrap"
@@ -599,16 +622,6 @@
                                 </Expander>
                             </StackPanel>
                         </Border>
-                        <GroupBox Grid.Column="1" Header="{Binding SolutionLabel}">
-                            <TextBox Text="{Binding SolutionText, Mode = OneWay}"
-                                     IsReadOnly="True"
-                                     AcceptsReturn="True"
-                                     TextWrapping="NoWrap"
-                                     VerticalScrollBarVisibility="Auto"
-                                     HorizontalScrollBarVisibility="Auto"
-                                     FontFamily="Consolas"
-                                     FontSize="13" />
-                        </GroupBox>
                     </Grid>
                 </Grid>
             </TabItem>
