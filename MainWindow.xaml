@@ -507,7 +507,6 @@
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>
-
                         <Border Grid.Column="1"
                                 Background="#F7F7F7"
                                 BorderBrush="#D2D2D2"
@@ -600,6 +599,16 @@
                                 </Expander>
                             </StackPanel>
                         </Border>
+                        <GroupBox Grid.Column="1" Header="{Binding SolutionLabel}">
+                            <TextBox Text="{Binding SolutionText, Mode = OneWay}"
+                                     IsReadOnly="True"
+                                     AcceptsReturn="True"
+                                     TextWrapping="NoWrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     FontFamily="Consolas"
+                                     FontSize="13" />
+                        </GroupBox>
                     </Grid>
                 </Grid>
             </TabItem>
