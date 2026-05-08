@@ -266,7 +266,7 @@
                         </ScrollViewer>
 
                         <GroupBox Grid.Column="1" Header="{Binding SolutionLabel}">
-                            <TextBox Text="{Binding SolutionText}"
+                            <TextBox Text="{Binding SolutionText, Mode = OneWay}"
                                      IsReadOnly="True"
                                      AcceptsReturn="True"
                                      TextWrapping="NoWrap"
