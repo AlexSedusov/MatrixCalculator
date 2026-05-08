@@ -41,13 +41,41 @@
             <Setter Property="AutoGenerateColumns" Value="True" />
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="CanUserDeleteRows" Value="False" />
-            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="SelectionUnit" Value="Cell" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="HeadersVisibility" Value="None" />
             <Setter Property="GridLinesVisibility" Value="All" />
             <Setter Property="RowHeaderWidth" Value="0" />
-            <Setter Property="MinRowHeight" Value="32" />
+            <Setter Property="MinRowHeight" Value="46" />
+            <Setter Property="RowHeight" Value="50" />
+            <Setter Property="ColumnWidth" Value="70" />
+            <Setter Property="FontSize" Value="18" />
             <Setter Property="Margin" Value="0,8,0,0" />
             <Setter Property="Background" Value="White" />
             <Setter Property="AlternatingRowBackground" Value="#F8FAFC" />
+        </Style>
+
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="BorderBrush" Value="#B7B7B7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#111111" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="BorderBrush" Value="#19D73A" />
+                    <Setter Property="BorderThickness" Value="3" />
+                    <Setter Property="Background" Value="#F9FFF8" />
+                    <Setter Property="Foreground" Value="#111111" />
+                </Trigger>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderBrush" Value="#19D73A" />
+                    <Setter Property="BorderThickness" Value="3" />
+                    <Setter Property="Background" Value="#F9FFF8" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="{x:Type GroupBox}">
@@ -56,6 +84,83 @@
             <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="#D8DEE8" />
         </Style>
+
+        <Style x:Key="WorkPanelBorderStyle" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="#FAFAFA" />
+            <Setter Property="BorderBrush" Value="#D7D7D7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Margin" Value="6" />
+        </Style>
+
+        <Style x:Key="MatrixBracketStyle" TargetType="{x:Type Border}">
+            <Setter Property="BorderBrush" Value="#222222" />
+            <Setter Property="BorderThickness" Value="2,0,2,0" />
+            <Setter Property="Padding" Value="7,0" />
+            <Setter Property="Margin" Value="4" />
+        </Style>
+
+        <Style x:Key="MatrixCellBorderStyle" TargetType="{x:Type Border}">
+            <Setter Property="Width" Value="68" />
+            <Setter Property="Height" Value="68" />
+            <Setter Property="Background" Value="#F3F3F3" />
+            <Setter Property="BorderBrush" Value="#B7B7B7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Margin" Value="0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                    <Setter Property="BorderBrush" Value="#19D73A" />
+                    <Setter Property="BorderThickness" Value="4" />
+                    <Setter Property="Background" Value="#F9FFF8" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                    <Setter Property="Background" Value="#EFEFEF" />
+                    <Setter Property="BorderBrush" Value="#C8C8C8" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="MatrixCellTextStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#111111" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                    <Setter Property="Foreground" Value="#A5A5A5" />
+                    <Setter Property="FontWeight" Value="Normal" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="MatrixVisualTemplate">
+            <StackPanel HorizontalAlignment="Center" Margin="8">
+                <TextBlock Text="{Binding Title}"
+                           TextAlignment="Center"
+                           FontWeight="SemiBold"
+                           FontSize="16"
+                           Margin="0,0,0,6" />
+                <Border Style="{StaticResource MatrixBracketStyle}">
+                    <ItemsControl ItemsSource="{Binding Cells}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="{Binding DataContext.Rows, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                             Columns="{Binding DataContext.Columns, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource MatrixCellBorderStyle}">
+                                    <TextBlock Text="{Binding Text}" Style="{StaticResource MatrixCellTextStyle}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+            </StackPanel>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
@@ -77,6 +182,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <GroupBox Grid.Row="0">
@@ -97,6 +203,7 @@
 
                             <Button Content="{Binding CalculateLabel}" Command="{Binding CalculateCommand}" />
                             <Button Content="{Binding ClearLabel}" Command="{Binding ClearCalculatorCommand}" />
+                            <Button Content="{Binding ShowSolutionLabel}" Command="{Binding ShowSolutionCommand}" />
                         </WrapPanel>
                     </GroupBox>
 
@@ -167,25 +274,118 @@
                                        Visibility="{Binding HasTextResult, Converter={StaticResource BoolToVisibility}}" />
                         </Grid>
                     </GroupBox>
+
+                    <Expander Grid.Row="3"
+                              Header="{Binding SolutionLabel}"
+                              Margin="8"
+                              Background="White"
+                              BorderBrush="#D8DEE8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.55*" />
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="0.85*" />
+                            </Grid.ColumnDefinitions>
+
+                            <ScrollViewer Grid.Column="0"
+                                          HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled">
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                    <ContentControl Content="{Binding VisualMatrixA}"
+                                                    ContentTemplate="{StaticResource MatrixVisualTemplate}" />
+                                    <TextBlock Text="{Binding VisualOperationSymbol}"
+                                               FontSize="38"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Margin="10,34,10,0" />
+                                    <ContentControl Content="{Binding VisualMatrixB}"
+                                                    ContentTemplate="{StaticResource MatrixVisualTemplate}"
+                                                    Visibility="{Binding HasVisualMatrixB, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock Text="="
+                                               FontSize="38"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Margin="10,34,10,0" />
+                                    <ContentControl Content="{Binding VisualResultMatrix}"
+                                                    ContentTemplate="{StaticResource MatrixVisualTemplate}" />
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <StackPanel Grid.Column="1" Margin="12,0">
+                                <TextBlock Text="{Binding VisualStepTitle}"
+                                           FontWeight="Bold"
+                                           FontSize="15"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,8" />
+                                <TextBlock Text="{Binding VisualStepDescription}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,8" />
+                                <TextBlock Text="{Binding FormulaLabel}"
+                                           FontWeight="Bold"
+                                           Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                <TextBlock Text="{Binding VisualStepFormula}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                <UniformGrid Columns="2" Margin="0,10,0,4">
+                                    <Button Content="{Binding ResetStepLabel}" Command="{Binding ResetVisualStepCommand}" />
+                                    <Button Content="{Binding PreviousStepLabel}" Command="{Binding PreviousVisualStepCommand}" />
+                                    <Button Content="{Binding NextStepLabel}" Command="{Binding NextVisualStepCommand}" />
+                                    <Button Content="{Binding ShowAllLabel}" Command="{Binding ShowAllVisualStepsCommand}" />
+                                </UniformGrid>
+                                <TextBlock Text="{Binding VisualProgressText}" FontWeight="SemiBold" />
+                                <ProgressBar Value="{Binding VisualProgressValue, Mode=OneWay}" Maximum="100" Height="10" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Margin="12,0,0,0">
+                                <Expander Header="{Binding TipsAndRulesLabel}">
+                                    <StackPanel Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding RuleLabel}" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding VisualRuleText}" TextWrapping="Wrap" Margin="0,2,0,10" />
+                                        <TextBlock Text="{Binding HintLabel}" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding VisualHintText}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Expander>
+                                <Expander Header="{Binding SolutionLabel}" Margin="0,12,0,0">
+                                    <TextBox Text="{Binding SolutionText, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             TextWrapping="NoWrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             FontFamily="Consolas"
+                                             FontSize="12"
+                                             MinHeight="160" />
+                                </Expander>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
                 </Grid>
             </TabItem>
 
             <TabItem Header="{Binding TestTabTitle}">
-                <Grid Margin="8">
+                <Grid Background="#F1F1F1" Margin="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <GroupBox Grid.Row="0" Header="{Binding TestSettingsHeader}">
+                    <Border Grid.Row="0"
+                            Background="#FBFBFB"
+                            BorderBrush="#D2D2D2"
+                            BorderThickness="0,0,0,1"
+                            Padding="10">
                         <WrapPanel VerticalAlignment="Center">
-                            <TextBlock Text="{Binding OperationLabel}" VerticalAlignment="Center" Margin="4" />
+                            <TextBlock Text="{Binding OperationLabel}" VerticalAlignment="Center" Margin="4" FontWeight="SemiBold" />
                             <ComboBox Width="230"
                                       ItemsSource="{Binding TestOperationOptions}"
                                       SelectedItem="{Binding SelectedTestOperationOption}"
                                       DisplayMemberPath="DisplayName" />
 
-                            <TextBlock Text="{Binding QuestionCountLabel}" VerticalAlignment="Center" Margin="16,4,4,4" />
+                            <TextBlock Text="{Binding QuestionCountLabel}" VerticalAlignment="Center" Margin="16,4,4,4" FontWeight="SemiBold" />
                             <ComboBox Width="72"
                                       ItemsSource="{Binding QuestionCountOptions}"
                                       SelectedItem="{Binding SelectedQuestionCount}" />
@@ -196,57 +396,100 @@
                                        FontWeight="SemiBold"
                                        Margin="18,4,4,4" />
                         </WrapPanel>
-                    </GroupBox>
+                    </Border>
 
                     <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="1.05*" />
-                            <ColumnDefinition Width="0.95*" />
+                            <ColumnDefinition Width="1.85*" />
+                            <ColumnDefinition Width="1.02*" />
+                            <ColumnDefinition Width="0.9*" />
                         </Grid.ColumnDefinitions>
 
                         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <GroupBox Header="{Binding QuestionLabel}">
+                                <Border Style="{StaticResource WorkPanelBorderStyle}">
                                     <TextBlock Text="{Binding CurrentQuestionText}"
                                                TextWrapping="Wrap"
                                                FontSize="16"
-                                               FontWeight="SemiBold" />
-                                </GroupBox>
+                                               FontWeight="SemiBold"
+                                               Foreground="#1C1C1C" />
+                                </Border>
 
-                                <GroupBox Header="{Binding ProblemDataLabel}">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding MatrixAHeader}" FontWeight="SemiBold" />
-                                        <DataGrid ItemsSource="{Binding TestMatrixAView}"
-                                                  IsReadOnly="True"
-                                                  MaxHeight="190" />
-
-                                        <StackPanel Visibility="{Binding HasTestMatrixB, Converter={StaticResource BoolToVisibility}}">
-                                            <TextBlock Text="{Binding MatrixBHeader}" FontWeight="SemiBold" Margin="0,14,0,0" />
-                                            <DataGrid ItemsSource="{Binding TestMatrixBView}"
-                                                      IsReadOnly="True"
-                                                      MaxHeight="190" />
+                                <Border Style="{StaticResource WorkPanelBorderStyle}">
+                                    <WrapPanel HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Margin="4" VerticalAlignment="Center">
+                                            <TextBlock Text="A =" FontSize="26" VerticalAlignment="Center" Margin="0,26,8,0" />
+                                            <ContentControl Content="{Binding VisualMatrixA}"
+                                                            ContentTemplate="{StaticResource MatrixVisualTemplate}" />
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal"
-                                                    Margin="0,14,0,0"
-                                                    Visibility="{Binding HasTestScalar, Converter={StaticResource BoolToVisibility}}">
-                                            <TextBlock Text="{Binding ScalarLabel}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding TestScalarValueText}"
-                                                       Margin="8,0,0,0"
-                                                       FontSize="18"
+                                                    Margin="36,4,4,4"
+                                                    VerticalAlignment="Center"
+                                                    Visibility="{Binding HasVisualMatrixB, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="B =" FontSize="26" VerticalAlignment="Center" Margin="0,26,8,0" />
+                                            <ContentControl Content="{Binding VisualMatrixB}"
+                                                            ContentTemplate="{StaticResource MatrixVisualTemplate}" />
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal"
+                                                    Margin="36,4,4,4"
+                                                    VerticalAlignment="Center"
+                                                    Visibility="{Binding HasVisualScalar, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="{Binding ScalarLabel}" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding VisualScalarValueText}"
+                                                       Margin="10,0,0,0"
+                                                       FontSize="28"
                                                        FontWeight="SemiBold"
                                                        VerticalAlignment="Center" />
                                         </StackPanel>
-                                    </StackPanel>
-                                </GroupBox>
+                                    </WrapPanel>
+                                </Border>
 
-                                <GroupBox Header="{Binding UserAnswerLabel}">
+                                <Border Style="{StaticResource WorkPanelBorderStyle}"
+                                        MinHeight="290">
                                     <StackPanel>
+                                        <TextBlock Text="{Binding MatrixOperationBoardTitle}"
+                                                   TextAlignment="Center"
+                                                   FontSize="22"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,4,0,12" />
+
+                                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                                      VerticalScrollBarVisibility="Disabled">
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                                <ContentControl Content="{Binding VisualMatrixA}"
+                                                                ContentTemplate="{StaticResource MatrixVisualTemplate}" />
+                                                <TextBlock Text="{Binding VisualOperationSymbol}"
+                                                           FontSize="42"
+                                                           FontWeight="SemiBold"
+                                                           VerticalAlignment="Center"
+                                                           Margin="12,34,12,0" />
+                                                <ContentControl Content="{Binding VisualMatrixB}"
+                                                                ContentTemplate="{StaticResource MatrixVisualTemplate}"
+                                                                Visibility="{Binding HasVisualMatrixB, Converter={StaticResource BoolToVisibility}}" />
+                                                <TextBlock Text="="
+                                                           FontSize="42"
+                                                           FontWeight="SemiBold"
+                                                           VerticalAlignment="Center"
+                                                           Margin="12,34,12,0" />
+                                                <ContentControl Content="{Binding VisualResultMatrix}"
+                                                                ContentTemplate="{StaticResource MatrixVisualTemplate}" />
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource WorkPanelBorderStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding UserAnswerLabel}" FontSize="18" FontWeight="SemiBold" />
                                         <DataGrid ItemsSource="{Binding AnswerView}"
-                                                  MaxHeight="200"
+                                                  MaxHeight="150"
                                                   Visibility="{Binding IsMatrixAnswerExpected, Converter={StaticResource BoolToVisibility}}" />
                                         <StackPanel Visibility="{Binding IsNumericAnswerExpected, Converter={StaticResource BoolToVisibility}}">
-                                            <TextBlock Text="{Binding NumberAnswerLabel}" Margin="0,0,0,4" />
+                                            <TextBlock Text="{Binding NumberAnswerLabel}" Margin="0,8,0,4" />
                                             <TextBox Width="180"
                                                      HorizontalAlignment="Left"
                                                      Text="{Binding NumericAnswer, UpdateSourceTrigger=PropertyChanged}" />
@@ -261,10 +504,101 @@
                                                    FontWeight="SemiBold"
                                                    Margin="4,8,4,0" />
                                     </StackPanel>
-                                </GroupBox>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
+                        <Border Grid.Column="1"
+                                Background="#F7F7F7"
+                                BorderBrush="#D2D2D2"
+                                BorderThickness="1,0,1,0"
+                                Padding="16">
+                            <DockPanel LastChildFill="True">
+                                <StackPanel DockPanel.Dock="Bottom">
+                                    <UniformGrid Columns="2" Margin="0,12,0,6">
+                                        <Button Content="{Binding ResetStepLabel}" Command="{Binding ResetVisualStepCommand}" />
+                                        <Button Content="{Binding PreviousStepLabel}" Command="{Binding PreviousVisualStepCommand}" />
+                                        <Button Content="{Binding NextStepLabel}" Command="{Binding NextVisualStepCommand}" />
+                                        <Button Content="{Binding ShowAllLabel}" Command="{Binding ShowAllVisualStepsCommand}" />
+                                    </UniformGrid>
+                                    <TextBlock Text="{Binding VisualProgressText}"
+                                               FontWeight="SemiBold"
+                                               Margin="4,0,4,4" />
+                                    <ProgressBar Value="{Binding VisualProgressValue, Mode=OneWay}" Maximum="100" Height="10" />
+                                </StackPanel>
 
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding VisualStepTitle}"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,0,20" />
+                                        <TextBlock Text="{Binding VisualStepDescription}"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,18" />
+                                        <TextBlock Text="{Binding FormulaLabel}"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Margin="0,0,0,4"
+                                                   Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock Text="{Binding VisualStepFormula}"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,24"
+                                                   Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                        <ContentControl Content="{Binding VisualResultMatrix}"
+                                                        ContentTemplate="{StaticResource MatrixVisualTemplate}"
+                                                        HorizontalAlignment="Center"
+                                                        Visibility="{Binding HasActiveVisualStep, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                Background="#F6F6F6"
+                                Padding="18">
+                            <StackPanel>
+                                <Expander Header="{Binding TipsAndRulesLabel}"
+                                          FontSize="18"
+                                          FontWeight="Bold">
+                                    <StackPanel Margin="0,18,0,0">
+                                        <TextBlock Text="{Binding RuleLabel}"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Margin="0,0,0,4" />
+                                        <TextBlock Text="{Binding VisualRuleText}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,26" />
+                                        <TextBlock Text="{Binding HintLabel}"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Margin="0,0,0,4" />
+                                        <TextBlock Text="{Binding VisualHintText}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Expander>
+
+                                <Expander Header="{Binding SolutionLabel}" Margin="0,30,0,0">
+                                    <TextBox Text="{Binding SolutionText, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             TextWrapping="NoWrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             FontFamily="Consolas"
+                                             FontSize="12"
+                                             MinHeight="220" />
+                                </Expander>
+                            </StackPanel>
+                        </Border>
                         <GroupBox Grid.Column="1" Header="{Binding SolutionLabel}">
                             <TextBox Text="{Binding SolutionText, Mode = OneWay}"
                                      IsReadOnly="True"
