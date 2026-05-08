@@ -22,7 +22,7 @@ public sealed class MatrixProblem
 
     public MatrixOperation Operation { get; }
 
-    public Matrix MatrixA { get; }
+    public Matrix MatrixA { get;}
 
     public Matrix? MatrixB { get; }
 
