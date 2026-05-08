@@ -1,0 +1,283 @@
+<Window x:Class="MatrixCalculator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:MatrixCalculator.ViewModels"
+        mc:Ignorable="d"
+        Title="{Binding WindowTitle}"
+        Height="780"
+        Width="1160"
+        MinHeight="680"
+        MinWidth="980"
+        Background="#F4F6F8"
+        FontFamily="Segoe UI">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Margin" Value="4" />
+        </Style>
+
+        <Style TargetType="{x:Type ComboBox}">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="{x:Type DataGrid}">
+            <Setter Property="AutoGenerateColumns" Value="True" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="GridLinesVisibility" Value="All" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="MinRowHeight" Value="32" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="AlternatingRowBackground" Value="#F8FAFC" />
+        </Style>
+
+        <Style TargetType="{x:Type GroupBox}">
+            <Setter Property="Margin" Value="8" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D8DEE8" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="{Binding LanguageMenuHeader}">
+                <MenuItem Header="{Binding RussianLabel}"
+                          Command="{Binding SetLanguageCommand}"
+                          CommandParameter="ru" />
+                <MenuItem Header="{Binding EnglishLabel}"
+                          Command="{Binding SetLanguageCommand}"
+                          CommandParameter="en" />
+            </MenuItem>
+        </Menu>
+
+        <TabControl Margin="12">
+            <TabItem Header="{Binding CalculatorTabTitle}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Grid.Row="0">
+                        <WrapPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding OperationLabel}" VerticalAlignment="Center" Margin="4" />
+                            <ComboBox Width="230"
+                                      ItemsSource="{Binding CalculatorOperations}"
+                                      SelectedItem="{Binding SelectedCalculatorOperation}"
+                                      DisplayMemberPath="DisplayName" />
+
+                            <TextBlock Text="{Binding ScalarLabel}"
+                                       VerticalAlignment="Center"
+                                       Margin="16,4,4,4"
+                                       Visibility="{Binding IsCalculatorScalarVisible, Converter={StaticResource BoolToVisibility}}" />
+                            <TextBox Width="90"
+                                     Text="{Binding ScalarValue, UpdateSourceTrigger=PropertyChanged}"
+                                     Visibility="{Binding IsCalculatorScalarVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                            <Button Content="{Binding CalculateLabel}" Command="{Binding CalculateCommand}" />
+                            <Button Content="{Binding ClearLabel}" Command="{Binding ClearCalculatorCommand}" />
+                        </WrapPanel>
+                    </GroupBox>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <GroupBox Grid.Column="0" Header="{Binding MatrixAHeader}">
+                            <DockPanel>
+                                <WrapPanel DockPanel.Dock="Top" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding RowsLabel}" VerticalAlignment="Center" Margin="4" />
+                                    <ComboBox Width="64"
+                                              ItemsSource="{Binding DimensionOptions}"
+                                              SelectedItem="{Binding MatrixARows}" />
+                                    <TextBlock Text="{Binding ColumnsLabel}" VerticalAlignment="Center" Margin="12,4,4,4" />
+                                    <ComboBox Width="64"
+                                              ItemsSource="{Binding DimensionOptions}"
+                                              SelectedItem="{Binding MatrixAColumns}" />
+                                    <Button Content="{Binding ResizeLabel}" Command="{Binding ResizeMatrixACommand}" />
+                                </WrapPanel>
+                                <DataGrid ItemsSource="{Binding MatrixAView}" />
+                            </DockPanel>
+                        </GroupBox>
+
+                        <GroupBox Grid.Column="1"
+                                  Header="{Binding MatrixBHeader}"
+                                  Visibility="{Binding IsCalculatorMatrixBVisible, Converter={StaticResource BoolToVisibility}}">
+                            <DockPanel>
+                                <WrapPanel DockPanel.Dock="Top" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding RowsLabel}" VerticalAlignment="Center" Margin="4" />
+                                    <ComboBox Width="64"
+                                              ItemsSource="{Binding DimensionOptions}"
+                                              SelectedItem="{Binding MatrixBRows}" />
+                                    <TextBlock Text="{Binding ColumnsLabel}" VerticalAlignment="Center" Margin="12,4,4,4" />
+                                    <ComboBox Width="64"
+                                              ItemsSource="{Binding DimensionOptions}"
+                                              SelectedItem="{Binding MatrixBColumns}" />
+                                    <Button Content="{Binding ResizeLabel}" Command="{Binding ResizeMatrixBCommand}" />
+                                </WrapPanel>
+                                <DataGrid ItemsSource="{Binding MatrixBView}" />
+                            </DockPanel>
+                        </GroupBox>
+                    </Grid>
+
+                    <GroupBox Grid.Row="2" Header="{Binding ResultLabel}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       Text="{Binding StatusMessage}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,6" />
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding ResultView}"
+                                      IsReadOnly="True"
+                                      MaxHeight="180"
+                                      Visibility="{Binding HasMatrixResult, Converter={StaticResource BoolToVisibility}}" />
+                            <TextBlock Grid.Row="2"
+                                       Text="{Binding ResultText}"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"
+                                       Margin="4,10,4,4"
+                                       Visibility="{Binding HasTextResult, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{Binding TestTabTitle}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Grid.Row="0" Header="{Binding TestSettingsHeader}">
+                        <WrapPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding OperationLabel}" VerticalAlignment="Center" Margin="4" />
+                            <ComboBox Width="230"
+                                      ItemsSource="{Binding TestOperationOptions}"
+                                      SelectedItem="{Binding SelectedTestOperationOption}"
+                                      DisplayMemberPath="DisplayName" />
+
+                            <TextBlock Text="{Binding QuestionCountLabel}" VerticalAlignment="Center" Margin="16,4,4,4" />
+                            <ComboBox Width="72"
+                                      ItemsSource="{Binding QuestionCountOptions}"
+                                      SelectedItem="{Binding SelectedQuestionCount}" />
+
+                            <Button Content="{Binding StartTestLabel}" Command="{Binding StartTestCommand}" />
+                            <TextBlock Text="{Binding ScoreText}"
+                                       VerticalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                       Margin="18,4,4,4" />
+                        </WrapPanel>
+                    </GroupBox>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.05*" />
+                            <ColumnDefinition Width="0.95*" />
+                        </Grid.ColumnDefinitions>
+
+                        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <GroupBox Header="{Binding QuestionLabel}">
+                                    <TextBlock Text="{Binding CurrentQuestionText}"
+                                               TextWrapping="Wrap"
+                                               FontSize="16"
+                                               FontWeight="SemiBold" />
+                                </GroupBox>
+
+                                <GroupBox Header="{Binding ProblemDataLabel}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding MatrixAHeader}" FontWeight="SemiBold" />
+                                        <DataGrid ItemsSource="{Binding TestMatrixAView}"
+                                                  IsReadOnly="True"
+                                                  MaxHeight="190" />
+
+                                        <StackPanel Visibility="{Binding HasTestMatrixB, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="{Binding MatrixBHeader}" FontWeight="SemiBold" Margin="0,14,0,0" />
+                                            <DataGrid ItemsSource="{Binding TestMatrixBView}"
+                                                      IsReadOnly="True"
+                                                      MaxHeight="190" />
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal"
+                                                    Margin="0,14,0,0"
+                                                    Visibility="{Binding HasTestScalar, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="{Binding ScalarLabel}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding TestScalarValueText}"
+                                                       Margin="8,0,0,0"
+                                                       FontSize="18"
+                                                       FontWeight="SemiBold"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </GroupBox>
+
+                                <GroupBox Header="{Binding UserAnswerLabel}">
+                                    <StackPanel>
+                                        <DataGrid ItemsSource="{Binding AnswerView}"
+                                                  MaxHeight="200"
+                                                  Visibility="{Binding IsMatrixAnswerExpected, Converter={StaticResource BoolToVisibility}}" />
+                                        <StackPanel Visibility="{Binding IsNumericAnswerExpected, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="{Binding NumberAnswerLabel}" Margin="0,0,0,4" />
+                                            <TextBox Width="180"
+                                                     HorizontalAlignment="Left"
+                                                     Text="{Binding NumericAnswer, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <WrapPanel Margin="0,10,0,0">
+                                            <Button Content="{Binding CheckAnswerLabel}" Command="{Binding CheckAnswerCommand}" />
+                                            <Button Content="{Binding NextQuestionLabel}" Command="{Binding NextQuestionCommand}" />
+                                            <Button Content="{Binding ShowSolutionLabel}" Command="{Binding ShowSolutionCommand}" />
+                                        </WrapPanel>
+                                        <TextBlock Text="{Binding TestFeedback}"
+                                                   TextWrapping="Wrap"
+                                                   FontWeight="SemiBold"
+                                                   Margin="4,8,4,0" />
+                                    </StackPanel>
+                                </GroupBox>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <GroupBox Grid.Column="1" Header="{Binding SolutionLabel}">
+                            <TextBox Text="{Binding SolutionText}"
+                                     IsReadOnly="True"
+                                     AcceptsReturn="True"
+                                     TextWrapping="NoWrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     FontFamily="Consolas"
+                                     FontSize="13" />
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>
