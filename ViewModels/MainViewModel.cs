@@ -20,10 +20,8 @@ public sealed class MainViewModel : ObservableObject
     private DataTable _testMatrixATable;
     private DataTable _testMatrixBTable;
     private DataTable _answerTable;
-    private List<VisualStep> _visualSteps = [];
-    private MatrixVisualViewModel _visualMatrixA = CreatePlaceholderVisual("A");
-    private MatrixVisualViewModel _visualMatrixB = CreatePlaceholderVisual("B");
-    private MatrixVisualViewModel _visualResultMatrix = CreatePlaceholderVisual("?");
+    private readonly VisualState _calculatorVisual = new();
+    private readonly VisualState _testVisual = new();
 
     private int _matrixARows = 2;
     private int _matrixAColumns = 2;
@@ -32,26 +30,17 @@ public sealed class MainViewModel : ObservableObject
     private int _selectedQuestionCount = 5;
     private int _currentQuestionNumber;
     private int _correctAnswers;
-    private int _currentVisualStepIndex;
     private bool _hasMatrixResult;
     private bool _isAnswered;
-    private bool _showAllVisualSteps;
     private string _scalarValue = "2";
     private string _resultText = string.Empty;
     private string _statusMessage;
     private string _numericAnswer = string.Empty;
     private string _testFeedback;
     private string _solutionText = string.Empty;
+    private string _testSolutionText = string.Empty;
     private string _currentQuestionText;
-    private string _visualStepTitle = string.Empty;
-    private string _visualStepDescription = string.Empty;
-    private string _visualStepFormula = string.Empty;
-    private string _visualRuleText = string.Empty;
-    private string _visualHintText = string.Empty;
-    private string _visualProgressText = string.Empty;
-    private double _visualProgressValue;
     private MatrixProblem? _currentProblem;
-    private MatrixProblem? _visualProblem;
     private OperationOption? _selectedCalculatorOperation;
     private OperationOption? _selectedTestOperationOption;
 
@@ -69,12 +58,8 @@ public sealed class MainViewModel : ObservableObject
         _statusMessage = T("StatusReady");
         _testFeedback = T("TestNotStarted");
         _currentQuestionText = T("TestNotStarted");
-        _visualStepTitle = T("CurrentStepEmpty");
-        _visualStepDescription = T("StartTestForSteps");
-        _visualStepFormula = string.Empty;
-        _visualRuleText = T("RulePlaceholder");
-        _visualHintText = T("HintPlaceholder");
-        _visualProgressText = string.Format(_localization.Culture, T("StepProgressFormat"), 0, 0, 0);
+        ResetVisualState(_calculatorVisual);
+        ResetVisualState(_testVisual);
 
         CalculatorOperations = [];
         TestOperationOptions = [];
@@ -88,11 +73,17 @@ public sealed class MainViewModel : ObservableObject
         StartTestCommand = new RelayCommand(_ => StartTest());
         CheckAnswerCommand = new RelayCommand(_ => CheckAnswer());
         NextQuestionCommand = new RelayCommand(_ => NextQuestion());
-        ShowSolutionCommand = new RelayCommand(_ => ShowSolution());
-        ResetVisualStepCommand = new RelayCommand(_ => ResetVisualStep());
-        PreviousVisualStepCommand = new RelayCommand(_ => PreviousVisualStep());
-        NextVisualStepCommand = new RelayCommand(_ => NextVisualStep());
-        ShowAllVisualStepsCommand = new RelayCommand(_ => ShowAllVisualSteps());
+        EndTestCommand = new RelayCommand(_ => EndTest());
+        ShowSolutionCommand = new RelayCommand(_ => ShowCalculatorSolution());
+        TestShowSolutionCommand = new RelayCommand(_ => ShowTestSolution());
+        ResetVisualStepCommand = new RelayCommand(_ => ResetVisualStep(_calculatorVisual, false));
+        PreviousVisualStepCommand = new RelayCommand(_ => PreviousVisualStep(_calculatorVisual, false));
+        NextVisualStepCommand = new RelayCommand(_ => NextVisualStep(_calculatorVisual, false));
+        ShowAllVisualStepsCommand = new RelayCommand(_ => ShowAllVisualSteps(_calculatorVisual, false));
+        TestResetVisualStepCommand = new RelayCommand(_ => ResetVisualStep(_testVisual, true));
+        TestPreviousVisualStepCommand = new RelayCommand(_ => PreviousVisualStep(_testVisual, true));
+        TestNextVisualStepCommand = new RelayCommand(_ => NextVisualStep(_testVisual, true));
+        TestShowAllVisualStepsCommand = new RelayCommand(_ => ShowAllVisualSteps(_testVisual, true));
     }
 
     public IReadOnlyList<int> DimensionOptions { get; }
@@ -119,7 +110,11 @@ public sealed class MainViewModel : ObservableObject
 
     public RelayCommand NextQuestionCommand { get; }
 
+    public RelayCommand EndTestCommand { get; }
+
     public RelayCommand ShowSolutionCommand { get; }
+
+    public RelayCommand TestShowSolutionCommand { get; }
 
     public RelayCommand ResetVisualStepCommand { get; }
 
@@ -128,6 +123,14 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand NextVisualStepCommand { get; }
 
     public RelayCommand ShowAllVisualStepsCommand { get; }
+
+    public RelayCommand TestResetVisualStepCommand { get; }
+
+    public RelayCommand TestPreviousVisualStepCommand { get; }
+
+    public RelayCommand TestNextVisualStepCommand { get; }
+
+    public RelayCommand TestShowAllVisualStepsCommand { get; }
 
     public string WindowTitle => T("WindowTitle");
 
@@ -179,6 +182,8 @@ public sealed class MainViewModel : ObservableObject
 
     public string NextQuestionLabel => T("NextQuestionLabel");
 
+    public string EndTestLabel => T("EndTestLabel");
+
     public string ShowSolutionLabel => T("ShowSolutionLabel");
 
     public string SolutionLabel => T("SolutionLabel");
@@ -203,7 +208,9 @@ public sealed class MainViewModel : ObservableObject
 
     public string MatrixOperationBoardTitle => T("MatrixOperationBoardTitle");
 
-    public bool HasActiveVisualStep => _currentVisualStepIndex >= 0 && _visualProblem is not null;
+    public bool HasActiveVisualStep => _calculatorVisual.CurrentStepIndex >= 0 && _calculatorVisual.Problem is not null;
+
+    public bool TestHasActiveVisualStep => _testVisual.CurrentStepIndex >= 0 && _testVisual.Problem is not null;
 
     public DataView MatrixAView => _matrixATable.DefaultView;
 
@@ -219,21 +226,27 @@ public sealed class MainViewModel : ObservableObject
 
     public MatrixVisualViewModel VisualMatrixA
     {
-        get => _visualMatrixA;
-        private set => SetProperty(ref _visualMatrixA, value);
+        get => _calculatorVisual.MatrixA;
+        private set => _calculatorVisual.MatrixA = value;
     }
 
     public MatrixVisualViewModel VisualMatrixB
     {
-        get => _visualMatrixB;
-        private set => SetProperty(ref _visualMatrixB, value);
+        get => _calculatorVisual.MatrixB;
+        private set => _calculatorVisual.MatrixB = value;
     }
 
     public MatrixVisualViewModel VisualResultMatrix
     {
-        get => _visualResultMatrix;
-        private set => SetProperty(ref _visualResultMatrix, value);
+        get => _calculatorVisual.ResultMatrix;
+        private set => _calculatorVisual.ResultMatrix = value;
     }
+
+    public MatrixVisualViewModel TestVisualMatrixA => _testVisual.MatrixA;
+
+    public MatrixVisualViewModel TestVisualMatrixB => _testVisual.MatrixB;
+
+    public MatrixVisualViewModel TestVisualResultMatrix => _testVisual.ResultMatrix;
 
     public int MatrixARows
     {
@@ -333,6 +346,12 @@ public sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _solutionText, value);
     }
 
+    public string TestSolutionText
+    {
+        get => _testSolutionText;
+        private set => SetProperty(ref _testSolutionText, value);
+    }
+
     public string CurrentQuestionText
     {
         get => _currentQuestionText;
@@ -341,45 +360,59 @@ public sealed class MainViewModel : ObservableObject
 
     public string VisualStepTitle
     {
-        get => _visualStepTitle;
-        private set => SetProperty(ref _visualStepTitle, value);
+        get => _calculatorVisual.StepTitle;
+        private set => _calculatorVisual.StepTitle = value;
     }
 
     public string VisualStepDescription
     {
-        get => _visualStepDescription;
-        private set => SetProperty(ref _visualStepDescription, value);
+        get => _calculatorVisual.StepDescription;
+        private set => _calculatorVisual.StepDescription = value;
     }
 
     public string VisualStepFormula
     {
-        get => _visualStepFormula;
-        private set => SetProperty(ref _visualStepFormula, value);
+        get => _calculatorVisual.StepFormula;
+        private set => _calculatorVisual.StepFormula = value;
     }
 
     public string VisualRuleText
     {
-        get => _visualRuleText;
-        private set => SetProperty(ref _visualRuleText, value);
+        get => _calculatorVisual.RuleText;
+        private set => _calculatorVisual.RuleText = value;
     }
 
     public string VisualHintText
     {
-        get => _visualHintText;
-        private set => SetProperty(ref _visualHintText, value);
+        get => _calculatorVisual.HintText;
+        private set => _calculatorVisual.HintText = value;
     }
 
     public string VisualProgressText
     {
-        get => _visualProgressText;
-        private set => SetProperty(ref _visualProgressText, value);
+        get => _calculatorVisual.ProgressText;
+        private set => _calculatorVisual.ProgressText = value;
     }
 
     public double VisualProgressValue
     {
-        get => _visualProgressValue;
-        private set => SetProperty(ref _visualProgressValue, value);
+        get => _calculatorVisual.ProgressValue;
+        private set => _calculatorVisual.ProgressValue = value;
     }
+
+    public string TestVisualStepTitle => _testVisual.StepTitle;
+
+    public string TestVisualStepDescription => _testVisual.StepDescription;
+
+    public string TestVisualStepFormula => _testVisual.StepFormula;
+
+    public string TestVisualRuleText => _testVisual.RuleText;
+
+    public string TestVisualHintText => _testVisual.HintText;
+
+    public string TestVisualProgressText => _testVisual.ProgressText;
+
+    public double TestVisualProgressValue => _testVisual.ProgressValue;
 
     public bool HasMatrixResult
     {
@@ -403,13 +436,31 @@ public sealed class MainViewModel : ObservableObject
 
     public bool HasTestScalar => _currentProblem?.Scalar is not null;
 
-    public bool HasVisualMatrixB => _visualProblem?.MatrixB is not null;
+    public bool HasVisualMatrixB => _calculatorVisual.Problem?.MatrixB is not null;
 
-    public bool HasVisualScalar => _visualProblem?.Scalar is not null;
+    public bool HasVisualScalar => _calculatorVisual.Problem?.Scalar is not null;
 
-    public string VisualScalarValueText => _visualProblem?.Scalar is null ? string.Empty : FormatNumber(_visualProblem.Scalar.Value);
+    public string VisualScalarValueText => _calculatorVisual.Problem?.Scalar is null ? string.Empty : FormatNumber(_calculatorVisual.Problem.Scalar.Value);
 
-    public string VisualOperationSymbol => _visualProblem?.Operation switch
+    public bool TestHasVisualMatrixB => _testVisual.Problem?.MatrixB is not null;
+
+    public bool TestHasVisualScalar => _testVisual.Problem?.Scalar is not null;
+
+    public string TestVisualScalarValueText => _testVisual.Problem?.Scalar is null ? string.Empty : FormatNumber(_testVisual.Problem.Scalar.Value);
+
+    public string VisualOperationSymbol => _calculatorVisual.Problem?.Operation switch
+    {
+        MatrixOperation.Add => "+",
+        MatrixOperation.Subtract => "-",
+        MatrixOperation.MultiplyMatrix => "x",
+        MatrixOperation.MultiplyScalar => "x",
+        MatrixOperation.Transpose => "T",
+        MatrixOperation.Determinant => "det",
+        MatrixOperation.Inverse => "-1",
+        _ => "+"
+    };
+
+    public string TestVisualOperationSymbol => _testVisual.Problem?.Operation switch
     {
         MatrixOperation.Add => "+",
         MatrixOperation.Subtract => "-",
@@ -435,25 +486,29 @@ public sealed class MainViewModel : ObservableObject
         RefreshOperationOptions();
         RefreshCurrentQuestionText();
 
-        if (_visualProblem is not null && !string.IsNullOrWhiteSpace(SolutionText))
+        if (_calculatorVisual.Problem is not null && !string.IsNullOrWhiteSpace(SolutionText))
         {
-            SolutionText = _solutionFormatter.Build(_visualProblem, _localization.Language);
+            SolutionText = _solutionFormatter.Build(_calculatorVisual.Problem, _localization.Language);
         }
 
-        if (_visualProblem is not null)
+        if (_testVisual.Problem is not null && !string.IsNullOrWhiteSpace(TestSolutionText))
         {
-            _visualSteps = BuildVisualSteps(_visualProblem);
-            UpdateVisualStep();
-        }
-        else
-        {
-            VisualStepTitle = T("CurrentStepEmpty");
-            VisualStepDescription = T("StartTestForSteps");
-            VisualRuleText = T("RulePlaceholder");
-            VisualHintText = T("HintPlaceholder");
+            TestSolutionText = _solutionFormatter.Build(_testVisual.Problem, _localization.Language);
         }
 
+        RefreshVisualState(_calculatorVisual, false);
+        RefreshVisualState(_testVisual, true);
         OnAllPropertiesChanged();
+    }
+
+    private void RefreshVisualState(VisualState state, bool isTest)
+    {
+        if (state.Problem is not null)
+        {
+            state.Steps = BuildVisualSteps(state.Problem);
+        }
+
+        UpdateVisualStep(state, isTest);
     }
 
     private void RefreshOperationOptions()
@@ -498,7 +553,7 @@ public sealed class MainViewModel : ObservableObject
         ResultText = string.Empty;
         HasMatrixResult = false;
         StatusMessage = T("StatusReady");
-        ClearVisualProblem();
+        ClearVisualProblem(_calculatorVisual, false);
 
         OnPropertyChanged(nameof(MatrixAView));
         OnPropertyChanged(nameof(MatrixBView));
@@ -532,7 +587,7 @@ public sealed class MainViewModel : ObservableObject
                 SetTextResult(FormatNumber(problem.NumberAnswer ?? 0d));
             }
 
-            LoadVisualProblem(problem);
+            LoadVisualProblem(_calculatorVisual, problem, false);
 
             StatusMessage = T("CalculationCompleted");
         }
@@ -570,7 +625,7 @@ public sealed class MainViewModel : ObservableObject
         _isAnswered = false;
         NumericAnswer = string.Empty;
         TestFeedback = _currentProblem.ExpectsMatrix ? T("EnterMatrixAnswer") : T("EnterNumberAnswer");
-        SolutionText = string.Empty;
+        TestSolutionText = string.Empty;
         _testMatrixATable = MatrixToTable(_currentProblem.MatrixA, _localization.Culture);
         _testMatrixBTable = _currentProblem.MatrixB is null
             ? CreateMatrixTable(1, 1, _localization.Culture)
@@ -578,7 +633,7 @@ public sealed class MainViewModel : ObservableObject
         _answerTable = _currentProblem.MatrixAnswer is null
             ? CreateMatrixTable(1, 1, _localization.Culture)
             : CreateMatrixTable(_currentProblem.MatrixAnswer.Rows, _currentProblem.MatrixAnswer.Columns, _localization.Culture);
-        LoadVisualProblem(_currentProblem);
+        LoadVisualProblem(_testVisual, _currentProblem, true);
 
         RefreshCurrentQuestionText();
         OnProblemPropertiesChanged();
@@ -654,7 +709,7 @@ public sealed class MainViewModel : ObservableObject
         {
             CurrentQuestionText = string.Format(_localization.Culture, T("TestFinished"), _correctAnswers, SelectedQuestionCount);
             TestFeedback = CurrentQuestionText;
-            SolutionText = string.Empty;
+            TestSolutionText = string.Empty;
             return;
         }
 
@@ -662,155 +717,231 @@ public sealed class MainViewModel : ObservableObject
         LoadProblem();
     }
 
-    private void ShowSolution()
+    private void EndTest()
     {
-        var solutionProblem = _visualProblem ?? _currentProblem;
+        if (_currentProblem is null)
+        {
+            TestFeedback = T("NoCurrentProblem");
+            return;
+        }
+
+        CurrentQuestionText = string.Format(_localization.Culture, T("TestFinished"), _correctAnswers, SelectedQuestionCount);
+        TestFeedback = CurrentQuestionText;
+        _currentProblem = null;
+        _isAnswered = false;
+        NumericAnswer = string.Empty;
+        TestSolutionText = string.Empty;
+        ClearVisualProblem(_testVisual, true);
+        OnProblemPropertiesChanged();
+    }
+
+    private void ShowCalculatorSolution()
+    {
+        ShowSolution(_calculatorVisual, false);
+    }
+
+    private void ShowTestSolution()
+    {
+        ShowSolution(_testVisual, true);
+    }
+
+    private void ShowSolution(VisualState state, bool isTest)
+    {
+        var solutionProblem = state.Problem ?? (isTest ? _currentProblem : null);
         if (solutionProblem is null)
         {
-            SolutionText = T("NoCurrentProblem");
+            SetSolutionText(isTest, T("NoCurrentProblem"));
             return;
         }
 
-        SolutionText = _solutionFormatter.Build(solutionProblem, _localization.Language);
+        SetSolutionText(isTest, _solutionFormatter.Build(solutionProblem, _localization.Language));
     }
 
-    private void ResetVisualStep()
+    private void ResetVisualStep(VisualState state, bool isTest)
     {
-        if (_visualProblem is null)
+        if (state.Problem is null)
         {
-            VisualStepDescription = T("StartTestForSteps");
+            state.StepDescription = T("StartTestForSteps");
+            OnVisualPropertiesChanged(isTest);
             return;
         }
 
-        _currentVisualStepIndex = -1;
-        _showAllVisualSteps = false;
-        UpdateVisualStep();
+        state.CurrentStepIndex = -1;
+        state.ShowAllSteps = false;
+        UpdateVisualStep(state, isTest);
     }
 
-    private void PreviousVisualStep()
+    private void PreviousVisualStep(VisualState state, bool isTest)
     {
-        if (_visualProblem is null || _visualSteps.Count == 0)
+        if (state.Problem is null || state.Steps.Count == 0)
         {
             return;
         }
 
-        _showAllVisualSteps = false;
-        _currentVisualStepIndex = Math.Max(-1, _currentVisualStepIndex - 1);
-        UpdateVisualStep();
+        state.ShowAllSteps = false;
+        state.CurrentStepIndex = Math.Max(-1, state.CurrentStepIndex - 1);
+        UpdateVisualStep(state, isTest);
     }
 
-    private void NextVisualStep()
+    private void NextVisualStep(VisualState state, bool isTest)
     {
-        if (_visualProblem is null || _visualSteps.Count == 0)
+        if (state.Problem is null || state.Steps.Count == 0)
         {
             return;
         }
 
-        _showAllVisualSteps = false;
-        _currentVisualStepIndex = Math.Min(_visualSteps.Count - 1, _currentVisualStepIndex + 1);
-        UpdateVisualStep();
+        state.ShowAllSteps = false;
+        state.CurrentStepIndex = Math.Min(state.Steps.Count - 1, state.CurrentStepIndex + 1);
+        UpdateVisualStep(state, isTest);
     }
 
-    private void ShowAllVisualSteps()
+    private void ShowAllVisualSteps(VisualState state, bool isTest)
     {
-        if (_visualProblem is null || _visualSteps.Count == 0)
+        if (state.Problem is null || state.Steps.Count == 0)
         {
             return;
         }
 
-        _showAllVisualSteps = true;
-        _currentVisualStepIndex = _visualSteps.Count - 1;
-        UpdateVisualStep();
+        state.ShowAllSteps = true;
+        state.CurrentStepIndex = state.Steps.Count - 1;
+        UpdateVisualStep(state, isTest);
     }
 
-    private void UpdateVisualStep()
+    private void UpdateVisualStep(VisualState state, bool isTest)
     {
-        if (_visualProblem is null || _visualSteps.Count == 0)
+        if (state.Problem is null || state.Steps.Count == 0)
         {
-            VisualMatrixA = CreatePlaceholderVisual("A");
-            VisualMatrixB = CreatePlaceholderVisual("B");
-            VisualResultMatrix = CreatePlaceholderVisual("?");
-            VisualStepTitle = T("CurrentStepEmpty");
-            VisualStepDescription = T("StartTestForSteps");
-            VisualStepFormula = string.Empty;
-            VisualRuleText = T("RulePlaceholder");
-            VisualHintText = T("HintPlaceholder");
-            VisualProgressText = string.Format(_localization.Culture, T("StepProgressFormat"), 0, 0, 0);
-            VisualProgressValue = 0;
-            OnVisualPropertiesChanged();
+            ResetVisualState(state);
+            OnVisualPropertiesChanged(isTest);
             return;
         }
 
-        if (_currentVisualStepIndex < 0 && !_showAllVisualSteps)
+        if (state.CurrentStepIndex < 0 && !state.ShowAllSteps)
         {
-            VisualMatrixA = BuildVisualMatrix(BuildMatrixTitle(MatrixAHeader, _visualProblem.MatrixA), _visualProblem.MatrixA, []);
-            VisualMatrixB = _visualProblem.MatrixB is null
+            state.MatrixA = BuildVisualMatrix(BuildMatrixTitle(MatrixAHeader, state.Problem.MatrixA), state.Problem.MatrixA, []);
+            state.MatrixB = state.Problem.MatrixB is null
                 ? CreatePlaceholderVisual("B")
-                : BuildVisualMatrix(BuildMatrixTitle(MatrixBHeader, _visualProblem.MatrixB), _visualProblem.MatrixB, []);
-            VisualResultMatrix = BuildResultVisualMatrix(_visualProblem, [], []);
-            VisualStepTitle = T("VisualReadyTitle");
-            VisualStepDescription = T("VisualReadyDescription");
-            VisualStepFormula = string.Empty;
-            VisualRuleText = BuildRuleText(_visualProblem.Operation);
-            VisualHintText = BuildHintText(_visualProblem.Operation);
-            VisualProgressText = string.Format(_localization.Culture, T("StepProgressFormat"), 0, 0, _visualSteps.Count);
-            VisualProgressValue = 0;
-            OnVisualPropertiesChanged();
+                : BuildVisualMatrix(BuildMatrixTitle(MatrixBHeader, state.Problem.MatrixB), state.Problem.MatrixB, []);
+            state.ResultMatrix = BuildResultVisualMatrix(state.Problem, [], []);
+            state.StepTitle = T("VisualReadyTitle");
+            state.StepDescription = T("VisualReadyDescription");
+            state.StepFormula = string.Empty;
+            state.RuleText = BuildRuleText(state.Problem.Operation);
+            state.HintText = BuildHintText(state.Problem.Operation);
+            state.ProgressText = string.Format(_localization.Culture, T("StepProgressFormat"), 0, 0, state.Steps.Count);
+            state.ProgressValue = 0;
+            OnVisualPropertiesChanged(isTest);
             return;
         }
 
-        var step = _visualSteps[Math.Clamp(_currentVisualStepIndex, 0, _visualSteps.Count - 1)];
-        var completedResultCells = _visualSteps
-            .Take(_showAllVisualSteps ? _visualSteps.Count : _currentVisualStepIndex + 1)
+        var step = state.Steps[Math.Clamp(state.CurrentStepIndex, 0, state.Steps.Count - 1)];
+        var completedResultCells = state.Steps
+            .Take(state.ShowAllSteps ? state.Steps.Count : state.CurrentStepIndex + 1)
             .SelectMany(item => item.ResultCells)
             .Distinct()
             .ToArray();
-        var completedSteps = _showAllVisualSteps ? _visualSteps.Count : _currentVisualStepIndex + 1;
-        var progress = (int)Math.Round(completedSteps * 100d / _visualSteps.Count);
+        var completedSteps = state.ShowAllSteps ? state.Steps.Count : state.CurrentStepIndex + 1;
+        var progress = (int)Math.Round(completedSteps * 100d / state.Steps.Count);
 
-        VisualMatrixA = BuildVisualMatrix(
-            BuildMatrixTitle(MatrixAHeader, _visualProblem.MatrixA),
-            _visualProblem.MatrixA,
+        state.MatrixA = BuildVisualMatrix(
+            BuildMatrixTitle(MatrixAHeader, state.Problem.MatrixA),
+            state.Problem.MatrixA,
             step.HighlightA);
 
-        VisualMatrixB = _visualProblem.MatrixB is null
+        state.MatrixB = state.Problem.MatrixB is null
             ? CreatePlaceholderVisual("B")
-            : BuildVisualMatrix(BuildMatrixTitle(MatrixBHeader, _visualProblem.MatrixB), _visualProblem.MatrixB, step.HighlightB);
+            : BuildVisualMatrix(BuildMatrixTitle(MatrixBHeader, state.Problem.MatrixB), state.Problem.MatrixB, step.HighlightB);
 
-        VisualResultMatrix = BuildResultVisualMatrix(_visualProblem, step.HighlightResult, completedResultCells);
-        VisualStepTitle = step.Title;
-        VisualStepDescription = step.Description;
-        VisualStepFormula = step.Formula;
-        VisualRuleText = BuildRuleText(_visualProblem.Operation);
-        VisualHintText = BuildHintText(_visualProblem.Operation);
-        VisualProgressText = string.Format(_localization.Culture, T("StepProgressFormat"), progress, completedSteps, _visualSteps.Count);
-        VisualProgressValue = progress;
+        state.ResultMatrix = BuildResultVisualMatrix(state.Problem, step.HighlightResult, completedResultCells);
+        state.StepTitle = step.Title;
+        state.StepDescription = step.Description;
+        state.StepFormula = step.Formula;
+        state.RuleText = BuildRuleText(state.Problem.Operation);
+        state.HintText = BuildHintText(state.Problem.Operation);
+        state.ProgressText = string.Format(_localization.Culture, T("StepProgressFormat"), progress, completedSteps, state.Steps.Count);
+        state.ProgressValue = progress;
 
-        OnVisualPropertiesChanged();
+        OnVisualPropertiesChanged(isTest);
     }
 
-    private void LoadVisualProblem(MatrixProblem problem)
+    private void LoadVisualProblem(VisualState state, MatrixProblem problem, bool isTest)
     {
-        _visualProblem = problem;
-        _visualSteps = BuildVisualSteps(problem);
-        _currentVisualStepIndex = -1;
-        _showAllVisualSteps = false;
-        SolutionText = string.Empty;
-        UpdateVisualStep();
+        state.Problem = problem;
+        state.Steps = BuildVisualSteps(problem);
+        state.CurrentStepIndex = -1;
+        state.ShowAllSteps = false;
+        SetSolutionText(isTest, string.Empty);
+        UpdateVisualStep(state, isTest);
     }
 
-    private void ClearVisualProblem()
+    private void ClearVisualProblem(VisualState state, bool isTest)
     {
-        _visualProblem = null;
-        _visualSteps = [];
-        _currentVisualStepIndex = -1;
-        _showAllVisualSteps = false;
-        SolutionText = string.Empty;
-        UpdateVisualStep();
+        state.Problem = null;
+        state.Steps = [];
+        state.CurrentStepIndex = -1;
+        state.ShowAllSteps = false;
+        SetSolutionText(isTest, string.Empty);
+        UpdateVisualStep(state, isTest);
     }
 
-    private void OnVisualPropertiesChanged()
+    private void ResetVisualState(VisualState state)
     {
+        state.MatrixA = CreatePlaceholderVisual("A");
+        state.MatrixB = CreatePlaceholderVisual("B");
+        state.ResultMatrix = CreatePlaceholderVisual("?");
+        state.StepTitle = T("CurrentStepEmpty");
+        state.StepDescription = T("StartTestForSteps");
+        state.StepFormula = string.Empty;
+        state.RuleText = T("RulePlaceholder");
+        state.HintText = T("HintPlaceholder");
+        state.ProgressText = string.Format(_localization.Culture, T("StepProgressFormat"), 0, 0, 0);
+        state.ProgressValue = 0;
+    }
+
+    private void SetSolutionText(bool isTest, string text)
+    {
+        if (isTest)
+        {
+            TestSolutionText = text;
+        }
+        else
+        {
+            SolutionText = text;
+        }
+    }
+
+    private void OnVisualPropertiesChanged(bool isTest)
+    {
+        if (isTest)
+        {
+            OnPropertyChanged(nameof(TestVisualMatrixA));
+            OnPropertyChanged(nameof(TestVisualMatrixB));
+            OnPropertyChanged(nameof(TestVisualResultMatrix));
+            OnPropertyChanged(nameof(TestVisualStepTitle));
+            OnPropertyChanged(nameof(TestVisualStepDescription));
+            OnPropertyChanged(nameof(TestVisualStepFormula));
+            OnPropertyChanged(nameof(TestVisualRuleText));
+            OnPropertyChanged(nameof(TestVisualHintText));
+            OnPropertyChanged(nameof(TestVisualProgressText));
+            OnPropertyChanged(nameof(TestVisualProgressValue));
+            OnPropertyChanged(nameof(TestHasActiveVisualStep));
+            OnPropertyChanged(nameof(TestHasVisualMatrixB));
+            OnPropertyChanged(nameof(TestHasVisualScalar));
+            OnPropertyChanged(nameof(TestVisualScalarValueText));
+            OnPropertyChanged(nameof(TestVisualOperationSymbol));
+            return;
+        }
+
+        OnPropertyChanged(nameof(VisualMatrixA));
+        OnPropertyChanged(nameof(VisualMatrixB));
+        OnPropertyChanged(nameof(VisualResultMatrix));
+        OnPropertyChanged(nameof(VisualStepTitle));
+        OnPropertyChanged(nameof(VisualStepDescription));
+        OnPropertyChanged(nameof(VisualStepFormula));
+        OnPropertyChanged(nameof(VisualRuleText));
+        OnPropertyChanged(nameof(VisualHintText));
+        OnPropertyChanged(nameof(VisualProgressText));
+        OnPropertyChanged(nameof(VisualProgressValue));
         OnPropertyChanged(nameof(HasActiveVisualStep));
         OnPropertyChanged(nameof(HasVisualMatrixB));
         OnPropertyChanged(nameof(HasVisualScalar));
@@ -1167,7 +1298,7 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(TestScalarValueText));
         OnPropertyChanged(nameof(IsMatrixAnswerExpected));
         OnPropertyChanged(nameof(IsNumericAnswerExpected));
-        OnVisualPropertiesChanged();
+        OnVisualPropertiesChanged(true);
     }
 
     private Matrix ReadMatrix(DataTable table, string matrixName)
@@ -1299,4 +1430,35 @@ public sealed class MainViewModel : ObservableObject
         IReadOnlyList<CellPosition> HighlightB,
         IReadOnlyList<CellPosition> HighlightResult,
         IReadOnlyList<CellPosition> ResultCells);
+
+    private sealed class VisualState
+    {
+        public MatrixProblem? Problem { get; set; }
+
+        public List<VisualStep> Steps { get; set; } = [];
+
+        public MatrixVisualViewModel MatrixA { get; set; } = CreatePlaceholderVisual("A");
+
+        public MatrixVisualViewModel MatrixB { get; set; } = CreatePlaceholderVisual("B");
+
+        public MatrixVisualViewModel ResultMatrix { get; set; } = CreatePlaceholderVisual("?");
+
+        public int CurrentStepIndex { get; set; } = -1;
+
+        public bool ShowAllSteps { get; set; }
+
+        public string StepTitle { get; set; } = string.Empty;
+
+        public string StepDescription { get; set; } = string.Empty;
+
+        public string StepFormula { get; set; } = string.Empty;
+
+        public string RuleText { get; set; } = string.Empty;
+
+        public string HintText { get; set; } = string.Empty;
+
+        public string ProgressText { get; set; } = string.Empty;
+
+        public double ProgressValue { get; set; }
+    }
 }
