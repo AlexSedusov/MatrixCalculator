@@ -3,6 +3,7 @@ using System.Data;
 using System.Globalization;
 using MatrixCalculator.Models;
 using MatrixCalculator.Services;
+using Microsoft.Win32;
 
 namespace MatrixCalculator.ViewModels;
 
@@ -68,6 +69,9 @@ public sealed class MainViewModel : ObservableObject
         SetLanguageCommand = new RelayCommand(parameter => SetLanguage(Convert.ToString(parameter, CultureInfo.InvariantCulture) ?? "ru"));
         ResizeMatrixACommand = new RelayCommand(_ => ResizeMatrixA());
         ResizeMatrixBCommand = new RelayCommand(_ => ResizeMatrixB());
+        ImportMatrixACommand = new RelayCommand(_ => ImportMatrixA());
+        ImportMatrixBCommand = new RelayCommand(_ => ImportMatrixB());
+        ExportResultCommand = new RelayCommand(_ => ExportResult());
         CalculateCommand = new RelayCommand(_ => Calculate());
         ClearCalculatorCommand = new RelayCommand(_ => ClearCalculator());
         StartTestCommand = new RelayCommand(_ => StartTest());
@@ -99,6 +103,12 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand ResizeMatrixACommand { get; }
 
     public RelayCommand ResizeMatrixBCommand { get; }
+
+    public RelayCommand ImportMatrixACommand { get; }
+
+    public RelayCommand ImportMatrixBCommand { get; }
+
+    public RelayCommand ExportResultCommand { get; }
 
     public RelayCommand CalculateCommand { get; }
 
@@ -155,6 +165,10 @@ public sealed class MainViewModel : ObservableObject
     public string ColumnsLabel => T("ColumnsLabel");
 
     public string ResizeLabel => T("ResizeLabel");
+
+    public string ImportExcelLabel => T("ImportExcelLabel");
+
+    public string ExportExcelLabel => T("ExportExcelLabel");
 
     public string ScalarLabel => T("ScalarLabel");
 
@@ -543,6 +557,98 @@ public sealed class MainViewModel : ObservableObject
     {
         _matrixBTable = ResizeMatrixTable(_matrixBTable, MatrixBRows, MatrixBColumns, _localization.Culture);
         OnPropertyChanged(nameof(MatrixBView));
+    }
+
+    private void ImportMatrixA()
+    {
+        ImportMatrix(table =>
+        {
+            _matrixATable = table;
+            MatrixARows = table.Rows.Count;
+            MatrixAColumns = table.Columns.Count;
+            OnPropertyChanged(nameof(MatrixAView));
+        });
+    }
+
+    private void ImportMatrixB()
+    {
+        ImportMatrix(table =>
+        {
+            _matrixBTable = table;
+            MatrixBRows = table.Rows.Count;
+            MatrixBColumns = table.Columns.Count;
+            OnPropertyChanged(nameof(MatrixBView));
+        });
+    }
+
+    private void ImportMatrix(Action<DataTable> applyTable)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = T("ExcelOpenFilter"),
+            Title = T("ImportExcelLabel")
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var matrix = ExcelMatrixService.ReadFirstSheet(dialog.FileName, _localization.Culture);
+            applyTable(MatrixToTable(matrix, _localization.Culture));
+            StatusMessage = string.Format(_localization.Culture, T("ImportExcelCompleted"), matrix.Rows, matrix.Columns);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = string.Format(_localization.Culture, T("ExcelOperationError"), ex.Message);
+        }
+    }
+
+    private void ExportResult()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = T("ExcelSaveFilter"),
+            Title = T("ExportExcelLabel"),
+            FileName = "matrix-result.xlsx",
+            DefaultExt = ".xlsx",
+            AddExtension = true
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var matrix = GetCurrentResultMatrix();
+            ExcelMatrixService.WriteMatrix(dialog.FileName, matrix, _localization.Culture);
+            StatusMessage = T("ExportExcelCompleted");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = string.Format(_localization.Culture, T("ExcelOperationError"), ex.Message);
+        }
+    }
+
+    private Matrix GetCurrentResultMatrix()
+    {
+        if (HasMatrixResult)
+        {
+            return ReadMatrix(_resultTable, ResultLabel);
+        }
+
+        if (!string.IsNullOrWhiteSpace(ResultText))
+        {
+            var matrix = new Matrix(1, 1);
+            matrix[0, 0] = ParseNumberOrThrow(ResultText, ResultLabel);
+            return matrix;
+        }
+
+        throw new InvalidOperationException(T("NoResultToExport"));
     }
 
     private void ClearCalculator()
