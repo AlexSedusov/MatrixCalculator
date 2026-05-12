@@ -229,10 +229,10 @@
                                               SelectedItem="{Binding MatrixAColumns}" />
                                     <Button Content="{Binding ResizeLabel}" Command="{Binding ResizeMatrixACommand}" />
                                 </WrapPanel>
-                                <Border Style="{StaticResource MatrixBracketStyle}" HorizontalAlignment="Left" Margin="0,10,0,0">
-                                    <DataGrid ItemsSource="{Binding MatrixAView}"
-                                              AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn" />
-                                </Border>
+                                <DataGrid ItemsSource="{Binding MatrixAView}"
+                                          AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn"
+                                          HorizontalAlignment="Left"
+                                          Margin="0,10,0,0" />
                             </DockPanel>
                         </GroupBox>
 
@@ -251,10 +251,10 @@
                                               SelectedItem="{Binding MatrixBColumns}" />
                                     <Button Content="{Binding ResizeLabel}" Command="{Binding ResizeMatrixBCommand}" />
                                 </WrapPanel>
-                                <Border Style="{StaticResource MatrixBracketStyle}" HorizontalAlignment="Left" Margin="0,10,0,0">
-                                    <DataGrid ItemsSource="{Binding MatrixBView}"
-                                              AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn" />
-                                </Border>
+                                <DataGrid ItemsSource="{Binding MatrixBView}"
+                                          AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn"
+                                          HorizontalAlignment="Left"
+                                          Margin="0,10,0,0" />
                             </DockPanel>
                         </GroupBox>
                     </Grid>
@@ -503,14 +503,12 @@
                                 <Border Style="{StaticResource WorkPanelBorderStyle}">
                                     <StackPanel>
                                         <TextBlock Text="{Binding UserAnswerLabel}" FontSize="18" FontWeight="SemiBold" />
-                                        <Border Style="{StaticResource MatrixBracketStyle}"
-                                                HorizontalAlignment="Left"
-                                                Margin="0,10,0,0"
-                                                Visibility="{Binding IsMatrixAnswerExpected, Converter={StaticResource BoolToVisibility}}">
-                                            <DataGrid ItemsSource="{Binding AnswerView}"
-                                                      AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn"
-                                                      MaxHeight="150" />
-                                        </Border>
+                                        <DataGrid ItemsSource="{Binding AnswerView}"
+                                                  AutoGeneratingColumn="MatrixGrid_AutoGeneratingColumn"
+                                                  HorizontalAlignment="Left"
+                                                  Margin="0,10,0,0"
+                                                  MaxHeight="150"
+                                                  Visibility="{Binding IsMatrixAnswerExpected, Converter={StaticResource BoolToVisibility}}" />
                                         <StackPanel Visibility="{Binding IsNumericAnswerExpected, Converter={StaticResource BoolToVisibility}}">
                                             <TextBlock Text="{Binding NumberAnswerLabel}" Margin="0,8,0,4" />
                                             <TextBox Width="180"
@@ -520,7 +518,6 @@
                                         <WrapPanel Margin="0,10,0,0">
                                             <Button Content="{Binding CheckAnswerLabel}" Command="{Binding CheckAnswerCommand}" />
                                             <Button Content="{Binding NextQuestionLabel}" Command="{Binding NextQuestionCommand}" />
-                                            <Button Content="{Binding ShowSolutionLabel}" Command="{Binding TestShowSolutionCommand}" />
                                         </WrapPanel>
                                         <TextBlock Text="{Binding TestFeedback}"
                                                    TextWrapping="Wrap"
@@ -607,18 +604,6 @@
                                                    FontSize="16"
                                                    FontWeight="SemiBold" />
                                     </StackPanel>
-                                </Expander>
-
-                                <Expander Header="{Binding SolutionLabel}" Margin="0,30,0,0">
-                                    <TextBox Text="{Binding TestSolutionText, Mode=OneWay}"
-                                             IsReadOnly="True"
-                                             AcceptsReturn="True"
-                                             TextWrapping="NoWrap"
-                                             VerticalScrollBarVisibility="Auto"
-                                             HorizontalScrollBarVisibility="Auto"
-                                             FontFamily="Consolas"
-                                             FontSize="12"
-                                             MinHeight="220" />
                                 </Expander>
                             </StackPanel>
                         </Border>
