@@ -7,6 +7,8 @@ using MatrixCalculator.Services;
 using WpfBinding = System.Windows.Data.Binding;
 using WpfControl = System.Windows.Controls.Control;
 using WpfTextBox = System.Windows.Controls.TextBox;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using KeyEventHandler = System.Windows.Input.KeyEventHandler;
 
 namespace MatrixCalculator;
 
@@ -15,9 +17,23 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        AddHandler(Keyboard.PreviewKeyDownEvent, new System.Windows.Input.KeyEventHandler(Window_PreviewKeyDown), true);
-        CommandBindings.Add(new CommandBinding(ApplicationCommands.Help, (_, _) => ShowContextHelp()));
-        InputBindings.Add(new KeyBinding(ApplicationCommands.Help, Key.F1, ModifierKeys.None));
+        AddHandler(
+            Keyboard.PreviewKeyDownEvent,
+            new KeyEventHandler(Window_PreviewKeyDown),
+            true);
+
+        CommandBindings.Add(new CommandBinding(
+            ApplicationCommands.Help,
+            (_, e) =>
+            {
+                ShowContextHelp();
+                e.Handled = true;
+            }));
+
+        InputBindings.Add(new KeyBinding(
+            ApplicationCommands.Help,
+            Key.F1,
+            ModifierKeys.None));
     }
 
     private void HelpButton_Click(object sender, RoutedEventArgs e)
@@ -25,9 +41,11 @@ public partial class MainWindow : Window
         HelpService.ShowHelp();
     }
 
-    private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.F1 && e.SystemKey != Key.F1 && e.Key != Key.System)
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key != Key.F1)
         {
             return;
         }
