@@ -9,7 +9,7 @@ using WpfControl = System.Windows.Controls.Control;
 using WpfTextBox = System.Windows.Controls.TextBox;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using KeyEventHandler = System.Windows.Input.KeyEventHandler;
-
+using System.Windows.Input;
 namespace MatrixCalculator;
 
 public partial class MainWindow : Window
