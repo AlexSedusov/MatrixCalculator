@@ -15,6 +15,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        AddHandler(Keyboard.PreviewKeyDownEvent, new System.Windows.Input.KeyEventHandler(Window_PreviewKeyDown), true);
+        CommandBindings.Add(new CommandBinding(ApplicationCommands.Help, (_, _) => ShowContextHelp()));
+        InputBindings.Add(new KeyBinding(ApplicationCommands.Help, Key.F1, ModifierKeys.None));
     }
 
     private void HelpButton_Click(object sender, RoutedEventArgs e)
@@ -24,12 +27,17 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key != Key.F1)
+        if (e.Key != Key.F1 && e.SystemKey != Key.F1 && e.Key != Key.System)
         {
             return;
         }
 
         e.Handled = true;
+        ShowContextHelp();
+    }
+
+    private void ShowContextHelp()
+    {
         HelpService.ShowHelp(FindNearestHelpId() ?? 1000);
     }
 
