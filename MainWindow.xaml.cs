@@ -1,7 +1,9 @@
+using FxResources.System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Interop;
 using System.Windows.Media.Media3D;
 using MatrixCalculator.Services;
 using WpfBinding = System.Windows.Data.Binding;
@@ -14,6 +16,10 @@ namespace MatrixCalculator;
 
 public partial class MainWindow : Window
 {
+    private const int WM_KEYDOWN = 0x0100;
+    private const int WM_SYSKEYDOWN = 0x0104;
+    private const int VK_F1 = 0x70;
+    private HwndSource? _hwndSource;
     public MainWindow()
     {
         InitializeComponent();
@@ -130,5 +136,30 @@ public partial class MainWindow : Window
         }
 
         return LogicalTreeHelper.GetParent(current);
+    }
+    
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+
+        _hwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+        _hwndSource?.AddHook(WndProc);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _hwndSource?.RemoveHook(WndProc);
+        base.OnClosed(e);
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if ((msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) && wParam.ToInt32() == VK_F1)
+        {
+            handled = true;
+            ShowContextHelp();
+        }
+
+        return IntPtr.Zero;
     }
 }
