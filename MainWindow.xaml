@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:services="clr-namespace:MatrixCalculator.Services"
         xmlns:vm="clr-namespace:MatrixCalculator.ViewModels"
         mc:Ignorable="d"
         Title="{Binding WindowTitle}"
@@ -11,7 +12,9 @@
         MinHeight="680"
         MinWidth="980"
         Background="#F4F6F8"
-        FontFamily="Segoe UI">
+        FontFamily="Segoe UI"
+        services:HelpService.HelpId="1000"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
@@ -187,7 +190,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <GroupBox Grid.Row="0">
+                    <GroupBox Grid.Row="0" services:HelpService.HelpId="1200">
                         <WrapPanel VerticalAlignment="Center">
                             <TextBlock Text="{Binding OperationLabel}" VerticalAlignment="Center" Margin="4" />
                             <ComboBox Width="230"
@@ -206,10 +209,11 @@
                             <Button Content="{Binding CalculateLabel}" Command="{Binding CalculateCommand}" />
                             <Button Content="{Binding ClearLabel}" Command="{Binding ClearCalculatorCommand}" />
                             <Button Content="{Binding ShowSolutionLabel}" Command="{Binding ShowSolutionCommand}" />
+                            <Button Content="Помощь" Click="HelpButton_Click" />
                         </WrapPanel>
                     </GroupBox>
 
-                    <Grid Grid.Row="1">
+                    <Grid Grid.Row="1" services:HelpService.HelpId="1100">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
@@ -261,7 +265,10 @@
                             </DockPanel>
                         </GroupBox>
 
-                        <GroupBox Grid.Column="2" Header="{Binding ResultLabel}" MinWidth="360">
+                        <GroupBox Grid.Column="2"
+                                  Header="{Binding ResultLabel}"
+                                  MinWidth="360"
+                                  services:HelpService.HelpId="1300">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -299,7 +306,8 @@
                               Header="{Binding SolutionLabel}"
                               Margin="8"
                               Background="White"
-                              BorderBrush="#D8DEE8">
+                              BorderBrush="#D8DEE8"
+                              services:HelpService.HelpId="1400">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1.55*" />
@@ -387,7 +395,9 @@
             </TabItem>
 
             <TabItem Header="{Binding TestTabTitle}">
-                <Grid Background="#F1F1F1" Margin="0">
+                <Grid Background="#F1F1F1"
+                      Margin="0"
+                      services:HelpService.HelpId="2000">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -430,7 +440,8 @@
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalContentAlignment="Stretch">
                             <StackPanel HorizontalAlignment="Stretch">
-                                <Border Style="{StaticResource WorkPanelBorderStyle}">
+                                <Border Style="{StaticResource WorkPanelBorderStyle}"
+                                        services:HelpService.HelpId="2100">
                                     <TextBlock Text="{Binding CurrentQuestionText}"
                                                TextWrapping="Wrap"
                                                FontSize="16"

@@ -3,7 +3,8 @@ using System.Data;
 using System.Globalization;
 using MatrixCalculator.Models;
 using MatrixCalculator.Services;
-using Microsoft.Win32;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace MatrixCalculator.ViewModels;
 
